@@ -1,4 +1,9 @@
 const exercices = [
+  //   {
+  //     id: 0,
+  //     name: "Test",
+  //     duration: 10,
+  //   },
   {
     id: 1,
     name: "Corde à sauter",
@@ -152,6 +157,11 @@ const exercices = [
 ];
 
 const circuits = [
+  //   {
+  //     id: 0,
+  //     name: "Test",
+  //     exercises: [0],
+  //   },
   {
     id: 1,
     name: "Full Body Express",

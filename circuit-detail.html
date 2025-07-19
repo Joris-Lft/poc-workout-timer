@@ -12,7 +12,6 @@
     <button id="backBtn" onclick="history.back()">⬅</button>
 
     <h1 id="circuitName"></h1>
-    <!-- Ajout de l'élément pour la durée totale -->
     <p id="circuitDuration"></p>
 
     <div class="tile-list" id="circuitExercises"></div>
@@ -37,7 +36,6 @@
       const list = document.getElementById("circuitExercises");
       document.getElementById("circuitName").textContent = circuit.name;
 
-      // --- Fonction pour calculer la durée totale ---
       function getCircuitTotalDuration(circuit, exercices) {
         let total = 0;
         circuit.exercises.forEach((exId) => {
@@ -49,14 +47,12 @@
         return total;
       }
 
-      // --- Formatage mm:ss ---
       function formatDuration(seconds) {
         const min = Math.floor(seconds / 60);
         const sec = seconds % 60;
         return `${min}m${sec < 10 ? "0" : ""}${sec}s`;
       }
 
-      // --- Affiche la durée totale ---
       const totalDuration = getCircuitTotalDuration(circuit, exercices);
       circuitDurationEl.textContent = `Durée totale : ${formatDuration(
         totalDuration
@@ -65,17 +61,15 @@
       const startBeep = document.getElementById("startBeep");
       const endBeep = document.getElementById("endBeep");
 
-      // Affiche la liste des exos
       circuit.exercises.forEach((exId) => {
         const ex = exercices.find((e) => e.id === exId);
         const tile = document.createElement("div");
         tile.className = "tile";
         tile.textContent = `${ex.name} - ${ex.duration}s`;
 
-        // Lien vers la vidéo
         const videoLink = document.createElement("a");
         videoLink.href = `https://www.youtube.com/results?search_query=${encodeURIComponent(
-          `workout exercice ${ex.name}`
+          "workout exercice " + ex.name
         )}`;
         videoLink.target = "_blank";
         videoLink.rel = "noopener noreferrer";
@@ -114,7 +108,11 @@
 
       function startNextPhase() {
         if (currentIndex >= circuit.exercises.length) {
-          endBeep.play();
+          endBeep
+            .play()
+            .catch((e) =>
+              console.warn("Le bip de fin n'a pas pu être joué :", e)
+            );
           currentStep.textContent = "Circuit terminé 💪";
           running = false;
           return;
@@ -124,19 +122,26 @@
         const ex = exercices.find((e) => e.id === exId);
 
         if (phase === "exercice") {
-          startBeep.play();
+          startBeep.play().catch(() => {});
           currentStep.textContent = `Exercice : ${ex.name}`;
           highlightCurrentExercise(ex.id);
           timeLeft = ex.duration;
           phase = "pause";
         } else {
           highlightCurrentExercise(null);
+
           if (currentIndex + 1 >= circuit.exercises.length) {
-            startNextPhase();
+            endBeep
+              .play()
+              .catch((e) =>
+                console.warn("Le bip de fin n'a pas pu être joué :", e)
+              );
+            currentStep.textContent = "Circuit terminé 💪";
+            running = false;
             return;
           }
 
-          startBeep.play();
+          startBeep.play().catch(() => {});
           currentStep.textContent = "Pause 🧘 (30s)";
           timeLeft = 30;
           phase = "exercice";
@@ -150,15 +155,6 @@
       function tick() {
         if (timeLeft <= 0) {
           clearInterval(timer);
-          if (
-            phase === "exercice" &&
-            currentIndex >= circuit.exercises.length
-          ) {
-            endBeep.play();
-            currentStep.textContent = "Circuit terminé 💪";
-            running = false;
-            return;
-          }
           startNextPhase();
         } else {
           timeLeft--;
