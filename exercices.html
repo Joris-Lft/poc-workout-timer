@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Exercices</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <button id="backBtn" onclick="history.back()">⬅</button>
+
+    <h1>Exercices</h1>
+    <div class="tile-list" id="exerciceList"></div>
+
+    <script src="data.js"></script>
+    <script>
+      const list = document.getElementById("exerciceList");
+      exercices.forEach((ex) => {
+        const tile = document.createElement("div");
+        tile.className = "tile";
+        tile.textContent = `${ex.name} - ${ex.duration}s`;
+
+        // Lien vers la recherche Youtube avec "exercise"
+        const videoLink = document.createElement("a");
+        videoLink.href = `https://www.youtube.com/results?search_query=${encodeURIComponent(
+          `workout exercice ${ex.name}`
+        )}`;
+        videoLink.textContent = "▶️";
+        videoLink.target = "_blank";
+        videoLink.rel = "noopener noreferrer";
+        videoLink.style.display = "block";
+        videoLink.style.marginTop = "5px";
+        videoLink.style.color = "#4caf50";
+        videoLink.style.fontSize = "0.9em";
+
+        tile.appendChild(videoLink);
+        list.appendChild(tile);
+      });
+    </script>
+  </body>
+</html>

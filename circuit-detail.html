@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Détail Circuit</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <audio id="startBeep" src="assets/sounds/start.mp3"></audio>
+    <audio id="endBeep" src="assets/sounds/end.mp3"></audio>
+
+    <button id="backBtn" onclick="history.back()">⬅</button>
+
+    <h1 id="circuitName"></h1>
+    <!-- Ajout de l'élément pour la durée totale -->
+    <p id="circuitDuration"></p>
+
+    <div class="tile-list" id="circuitExercises"></div>
+    <div id="timerDisplay">00:00</div>
+    <div class="timer-controls">
+      <button onclick="startTimer()">Start</button>
+      <button onclick="pauseTimer()">Pause</button>
+      <button onclick="resetTimer()">Stop</button>
+    </div>
+
+    <h2 id="currentStep"></h2>
+
+    <script src="data.js"></script>
+    <script>
+      const currentStep = document.getElementById("currentStep");
+      const timerDisplay = document.getElementById("timerDisplay");
+      const circuitDurationEl = document.getElementById("circuitDuration");
+
+      const params = new URLSearchParams(window.location.search);
+      const id = parseInt(params.get("id"));
+      const circuit = circuits.find((c) => c.id === id);
+      const list = document.getElementById("circuitExercises");
+      document.getElementById("circuitName").textContent = circuit.name;
+
+      // --- Fonction pour calculer la durée totale ---
+      function getCircuitTotalDuration(circuit, exercices) {
+        let total = 0;
+        circuit.exercises.forEach((exId) => {
+          const exo = exercices.find((e) => e.id === exId);
+          if (exo) total += exo.duration;
+        });
+        const pauses = 30 * (circuit.exercises.length - 1);
+        total += pauses;
+        return total;
+      }
+
+      // --- Formatage mm:ss ---
+      function formatDuration(seconds) {
+        const min = Math.floor(seconds / 60);
+        const sec = seconds % 60;
+        return `${min}m${sec < 10 ? "0" : ""}${sec}s`;
+      }
+
+      // --- Affiche la durée totale ---
+      const totalDuration = getCircuitTotalDuration(circuit, exercices);
+      circuitDurationEl.textContent = `Durée totale : ${formatDuration(
+        totalDuration
+      )}`;
+
+      const startBeep = document.getElementById("startBeep");
+      const endBeep = document.getElementById("endBeep");
+
+      // Affiche la liste des exos
+      circuit.exercises.forEach((exId) => {
+        const ex = exercices.find((e) => e.id === exId);
+        const tile = document.createElement("div");
+        tile.className = "tile";
+        tile.textContent = `${ex.name} - ${ex.duration}s`;
+
+        // Lien vers la vidéo
+        const videoLink = document.createElement("a");
+        videoLink.href = `https://www.youtube.com/results?search_query=${encodeURIComponent(
+          `workout exercice ${ex.name}`
+        )}`;
+        videoLink.target = "_blank";
+        videoLink.rel = "noopener noreferrer";
+        videoLink.textContent = "▶️";
+        videoLink.style.display = "block";
+        videoLink.style.marginTop = "6px";
+        videoLink.style.color = "#58a6ff";
+        videoLink.style.fontSize = "0.85em";
+        videoLink.style.textDecoration = "underline";
+        tile.appendChild(videoLink);
+
+        tile.dataset.exoId = ex.id;
+        list.appendChild(tile);
+      });
+
+      let currentIndex = 0;
+      let phase = "exercice"; // ou "pause"
+      let timeLeft = 0;
+      let timer;
+      let running = false;
+
+      function highlightCurrentExercise(exoId) {
+        document.querySelectorAll(".tile").forEach((tile) => {
+          tile.classList.remove("active");
+          if (parseInt(tile.dataset.exoId) === exoId) {
+            tile.classList.add("active");
+          }
+        });
+      }
+
+      function updateDisplay() {
+        const min = String(Math.floor(timeLeft / 60)).padStart(2, "0");
+        const sec = String(timeLeft % 60).padStart(2, "0");
+        timerDisplay.textContent = `${min}:${sec}`;
+      }
+
+      function startNextPhase() {
+        if (currentIndex >= circuit.exercises.length) {
+          endBeep.play();
+          currentStep.textContent = "Circuit terminé 💪";
+          running = false;
+          return;
+        }
+
+        const exId = circuit.exercises[currentIndex];
+        const ex = exercices.find((e) => e.id === exId);
+
+        if (phase === "exercice") {
+          startBeep.play();
+          currentStep.textContent = `Exercice : ${ex.name}`;
+          highlightCurrentExercise(ex.id);
+          timeLeft = ex.duration;
+          phase = "pause";
+        } else {
+          highlightCurrentExercise(null);
+          if (currentIndex + 1 >= circuit.exercises.length) {
+            startNextPhase();
+            return;
+          }
+
+          startBeep.play();
+          currentStep.textContent = "Pause 🧘 (30s)";
+          timeLeft = 30;
+          phase = "exercice";
+          currentIndex++;
+        }
+
+        updateDisplay();
+        timer = setInterval(tick, 1000);
+      }
+
+      function tick() {
+        if (timeLeft <= 0) {
+          clearInterval(timer);
+          if (
+            phase === "exercice" &&
+            currentIndex >= circuit.exercises.length
+          ) {
+            endBeep.play();
+            currentStep.textContent = "Circuit terminé 💪";
+            running = false;
+            return;
+          }
+          startNextPhase();
+        } else {
+          timeLeft--;
+          updateDisplay();
+        }
+      }
+
+      function startTimer() {
+        if (running) return;
+        running = true;
+        startNextPhase();
+      }
+
+      function pauseTimer() {
+        clearInterval(timer);
+        running = false;
+      }
+
+      function resetTimer() {
+        clearInterval(timer);
+        running = false;
+        currentIndex = 0;
+        phase = "exercice";
+        currentStep.textContent = "";
+        timerDisplay.textContent = "00:00";
+        document
+          .querySelectorAll(".tile")
+          .forEach((t) => t.classList.remove("active"));
+      }
+
+      updateDisplay();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Circuits</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <button id="backBtn" onclick="history.back()">⬅</button>
+
+    <h1>Circuits</h1>
+    <div class="tile-list" id="circuitList"></div>
+
+    <script src="data.js"></script>
+    <script>
+      const list = document.getElementById("circuitList");
+      circuits.forEach((circuit) => {
+        const link = document.createElement("a");
+        link.className = "tile";
+        link.href = `circuit-detail.html?id=${circuit.id}`;
+        link.textContent = circuit.name;
+        list.appendChild(link);
+      });
+    </script>
+  </body>
+</html>
